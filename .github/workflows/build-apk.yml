@@ -1,0 +1,33 @@
+name: Build Clipkaar APK
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack project zip
+        run: |
+          if [ -f clipkaar-project.zip ]; then unzip -o clipkaar-project.zip -d .; fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Build APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+      - run: cp app/build/outputs/apk/debug/app-debug.apk Clipkaar.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Clipkaar-APK
+          path: Clipkaar.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Clipkaar build ${{ github.run_number }}
+          files: Clipkaar.apk
